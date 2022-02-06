@@ -18,6 +18,17 @@ class GaussianGenerativeModel:
 
     # TODO: Implement this method!
     def fit(self, X, y):
+        self.mu = []
+        self.shared_covariance = np.zeros((2,2))
+        self.covariances = []
+
+        for k in range(3):
+            x_vals = X[y==k,:]
+            self.mu.append(np.mean(x_vals, axis=0))
+            if self.is_shared_covariance:
+                self.shared_covariance += len(x_vals) / len(X) * np.cov(x_vals, rowvar=False)
+            else:
+                self.covariances.append(np.cov(x_vals, rowvar=False))
         return
 
     # TODO: Implement this method!
@@ -26,11 +37,18 @@ class GaussianGenerativeModel:
         # just so that the distribution code is runnable and produces a
         # (currently meaningless) visualization.
         preds = []
-        for x in X_pred:
-            z = np.sin(x ** 2).sum()
-            preds.append(1 + np.sign(z) * (np.abs(z) > 0.3))
-        return np.array(preds)
+        for k in range(3):
+            covariance = self.shared_covariance if self.is_shared_covariance else self.covariances[k]
+            preds.append(mvn.pdf(X_pred, self.mu[k], covariance))
+        preds = np.array(preds)
+        if preds.ndim == 1:
+            preds = np.reshape(preds, (preds.shape[0], 1))
+        return np.argmax(preds.T, axis=1)
 
     # TODO: Implement this method!
     def negative_log_likelihood(self, X, y):
-        pass
+        ret = 0
+        for k in range(3):
+            covariance = self.shared_covariance if self.is_shared_covariance else self.covariances[k]
+            ret += -1 * np.sum(mvn.logpdf(X[y==k], self.mu[k], covariance) + np.log(len(y[y==k]) / len(y)))
+        return ret

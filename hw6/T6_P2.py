@@ -215,6 +215,19 @@ def policy_evaluation(pi, gamma, theta = 0.1):
     """
     # TODO: Complete this function.
     V = np.zeros(state_count)
+    delta = float('inf')
+
+    while delta > theta:
+        V_new = np.zeros(state_count)
+        for state in range(state_count):
+            temp = get_reward(state, int(pi[state]))
+            for new_state in range(state_count):
+                prob = get_transition_prob(state, int(pi[state]), new_state)
+                if prob > 0:
+                    temp += gamma * prob * V[new_state]
+            V_new[state] = temp
+        delta = np.max(V_new - V)
+        V = V_new
 
     return V
 
@@ -235,6 +248,20 @@ def update_policy_iteration(V, pi, gamma, theta = 0.1):
     # TODO: Complete this function.
     V_new = policy_evaluation(pi, gamma, theta)
     pi_new = np.zeros(state_count)
+    
+    for state in range(state_count):
+        max_val = float('-inf')
+        max_action = -1
+        for a in range(action_count):
+            temp = get_reward(state, a)
+            for new_state in range(state_count):
+                prob = get_transition_prob(state, a, new_state)
+                if prob > 0:
+                    temp += gamma * prob * V_new[new_state]
+            if temp > max_val:
+                max_val = temp
+                max_action = a
+        pi_new[state] = max_action
 
     return V_new, pi_new
 
@@ -255,6 +282,32 @@ def update_value_iteration(V, pi, gamma):
     # TODO: Complete this function.
     V_new = np.zeros(state_count)
     pi_new = np.zeros(state_count)
+
+    for state in range(state_count):
+        max_val = float('-inf')
+        for a in range(action_count):
+            temp = get_reward(state, a)
+            for new_state in range(state_count):
+                prob = get_transition_prob(state, a, new_state)
+                if prob > 0:
+                    temp += gamma * prob * V[new_state]
+            if temp > max_val:
+                max_val = temp
+        V_new[state] = max_val
+
+    for state in range(state_count):
+        max_val = float('-inf')
+        max_action = -1
+        for a in range(action_count):
+            temp = get_reward(state, a)
+            for new_state in range(state_count):
+                prob = get_transition_prob(state, a, new_state)
+                if prob > 0:
+                    temp += gamma * prob * V_new[new_state]
+            if temp > max_val:
+                max_val = temp
+                max_action = a
+        pi_new[state] = max_action
 
     return V_new, pi_new
 
@@ -312,11 +365,18 @@ def learn_strategy(planning_type = VALUE_ITER, max_iter = 10, print_every = 5, c
                 # plot the policy
                 make_policy_plot(pi = pi, iter_type = POLICY_ITER, iter_num = n_iter)
 
+# import time
+# start_time = time.time()
 
 print('Beginning policy iteration.')
-learn_strategy(planning_type=POLICY_ITER, max_iter = 10, print_every = 2)
+learn_strategy(planning_type=POLICY_ITER, max_iter=10, print_every=2, ct=0.01)
 print('Policy iteration complete.')
 
+# print(f'Policy iteration runtime: {time.time() - start_time}')
+# start_time = time.time()
+
 print('Beginning value iteration.')
-learn_strategy(planning_type=VALUE_ITER, max_iter = 10, print_every = 2)
+learn_strategy(planning_type=VALUE_ITER, max_iter=10, print_every=2, ct=0.1)
 print('Value iteration complete.\n')
+
+# print(f'Value iteration runtime: {time.time() - start_time}')

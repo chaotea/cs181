@@ -21,11 +21,11 @@ def basis1(x):
 
 # TODO: Implement this
 def basis2(x):
-    return None
+    return np.stack([np.ones(len(x)), x, x**2, x**3], axis=1)
 
 # TODO: Implement this
 def basis3(x):
-    return None
+    return np.stack([np.ones(len(x)), x, x**2, x**3, x**4, x**5], axis=1)
 
 class LogisticRegressor:
     def __init__(self, eta, runs):
@@ -44,10 +44,16 @@ class LogisticRegressor:
             self.W = w_init
         else:
             self.W = np.random.rand(x.shape[1], 1)
+            for i in range(self.runs):
+                gradient = np.zeros((x.shape[1], 1))
+                for x_i, y_i in zip(x,y):
+                    y_i_hat = sigmoid(np.dot(x_i, self.W))
+                    gradient += ((y_i_hat - y_i) * x_i).reshape(x.shape[1], 1)
+                self.W -= self.eta * gradient / x.shape[1]
 
     # TODO: Fix this method!
     def predict(self, x):
-        return np.dot(x, self.W)
+        return sigmoid(np.dot(x, self.W))
 
 # Function to visualize prediction lines
 # Takes as input last_x, last_y, [list of models], basis function, title
@@ -114,9 +120,9 @@ if __name__ == "__main__":
     all_models = []
     for _ in range(10):
         x, y = generate_data(N)
-        x_transformed = basis1(x)
+        x_transformed = basis3(x)
         model = LogisticRegressor(eta=eta, runs=runs)
         model.fit(x_transformed, y)
         all_models.append(model)
     # Here x and y contain last dataset:
-    visualize_prediction_lines(x, y, all_models, basis1, "exampleplot")
+    visualize_prediction_lines(x, y, all_models, basis3, "basis3")

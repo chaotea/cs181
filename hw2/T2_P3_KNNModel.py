@@ -23,8 +23,12 @@ class KNNModel:
         # (currently meaningless) visualization.
         preds = []
         for x in X_pred:
-            z = np.cos(x ** 2).sum()
-            preds.append(1 + np.sign(z) * (np.abs(z) > 0.3))
+            distances = []
+            for x_i, y_i in zip(self.X, self.y):
+                distances.append(((x[0] - x_i[0])/3)**2 + (x[1] - x_i[1])**2)
+            distances_and_y = [(d, y) for d, y in zip(distances, self.y)]
+            distances_and_y.sort(key=lambda z: z[0])
+            preds.append(np.argmax(np.bincount([y for d, y in distances_and_y[:self.K]])))
         return np.array(preds)
 
     # In KNN, "fitting" can be as simple as storing the data, so this has been written for you
